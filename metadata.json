@@ -1,0 +1,7 @@
+{
+  "name": "Remix: SkyDrive - Smart Cab Booking",
+  "description": "A professional cab booking platform with real-time tracking, driver management, and live chat support.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

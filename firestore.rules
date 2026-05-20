@@ -1,0 +1,165 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: admins
+    // Fields: username, password, pin, role, permissions
+    //
+    // Collection: users
+    // Fields: name, phone, created_at, role
+    //
+    // Collection: drivers
+    // Fields: name, phone, pin, status, wallet_balance, is_online, role
+    //
+    // Collection: vehicles
+    // Fields: driver_id, model, plate_number, type
+    //
+    // Collection: rides
+    // Fields: tracking_id, pickup_location, dropoff_location, status, fare, driver_id, user_id, ...
+    //
+    // Collection: transactions
+    // Fields: driver_id, amount, type, description, created_at
+    //
+    // Collection: withdrawal_requests
+    // Fields: driver_id, amount, bank_details, status, created_at
+    //
+    // Collection: notifications
+    // Fields: message, target, driver_id, created_at, read_by
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role in ['admin', 'owner'] ||
+          (request.auth.token.email == "digitalserviceindia84@gmail.com"));
+    }
+
+    function isPlatformOwner() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'owner' ||
+          (request.auth.token.email == "digitalserviceindia84@gmail.com"));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    function isValidPhone(phone) {
+      return phone is string && phone.size() >= 10 && phone.size() <= 15;
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasRequiredFields(['name', 'phone']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             isValidPhone(data.phone);
+    }
+
+    function isValidDriver(data) {
+      return hasRequiredFields(['name', 'phone', 'pin', 'status']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             isValidPhone(data.phone) &&
+             data.pin is string && data.pin.matches("^\\d{4}$") &&
+             data.status in ['active', 'inactive', 'pending', 'under verification'];
+    }
+
+    function isValidRide(data) {
+      return hasRequiredFields(['tracking_id', 'pickup_location', 'dropoff_location', 'status', 'fare']) &&
+             data.tracking_id is string &&
+             data.pickup_location is string && data.pickup_location.size() < 500 &&
+             data.dropoff_location is string && data.dropoff_location.size() < 500 &&
+             data.status in ['pending', 'accepted', 'ongoing', 'completed', 'cancelled'] &&
+             data.fare is number && data.fare >= 0;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /admins/{adminId} {
+      // Allow read for login verification (manual auth)
+      allow read: if true;
+      allow write: if true; // Permissive for manual auth mode as requested
+    }
+
+    match /users/{userId} {
+      // Allow read for login verification (manual auth)
+      allow read: if true;
+      allow write: if true; // Allow create, update, delete
+    }
+
+    match /drivers/{driverId} {
+      // Allow read for login verification (manual auth)
+      allow read: if true;
+      allow create: if true;
+      allow update: if true; // In production, this should be hardened to only allow specific fields
+      allow delete: if isAdmin();
+    }
+
+    match /test/connection {
+      allow read: if true;
+    }
+
+    match /rides/{rideId} {
+      // Permissive read for manual auth mode
+      allow read, write: if true;
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /withdrawal_requests/{requestId} {
+      allow read, write: if true;
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /vehicles/{vehicleId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /activities/{activityId} {
+      allow read, write: if true;
+    }
+
+    match /push_subscriptions/{subId} {
+      allow read, write: if true;
+    }
+
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

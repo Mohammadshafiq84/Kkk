@@ -1,0 +1,182 @@
+{
+  "entities": {
+    "Admin": {
+      "title": "Admin",
+      "description": "Administrator account for managing the platform",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "pin": { "type": "string" },
+        "role": { "type": "string", "enum": ["owner", "admin"] },
+        "created_at": { "type": "string", "format": "date-time" },
+        "permissions": {
+          "type": "object",
+          "properties": {
+            "rides": { "type": "boolean" },
+            "drivers": { "type": "boolean" },
+            "users": { "type": "boolean" },
+            "withdrawals": { "type": "boolean" },
+            "notifications": { "type": "boolean" }
+          }
+        }
+      },
+      "required": ["username", "password", "pin", "role"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Passenger account",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "password": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "role": { "type": "string", "enum": ["user"] },
+        "consecutive_cancellations": { "type": "integer", "description": "Number of consecutive cancellations by the user" }
+      },
+      "required": ["name", "phone", "email", "password"]
+    },
+    "Driver": {
+      "title": "Driver",
+      "description": "Driver account",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "password": { "type": "string" },
+        "pin": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive", "pending"] },
+        "monthly_fee_status": { "type": "string", "enum": ["pending", "done"] },
+        "wallet_balance": { "type": "number" },
+        "is_online": { "type": "boolean" },
+        "role": { "type": "string", "enum": ["driver"] },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "phone", "email", "password", "status"]
+    },
+    "Vehicle": {
+      "title": "Vehicle",
+      "description": "Vehicle details linked to a driver",
+      "type": "object",
+      "properties": {
+        "driver_id": { "type": "string" },
+        "model": { "type": "string" },
+        "plate_number": { "type": "string" },
+        "type": { "type": "string", "enum": ["Auto", "E-Rickshaw", "Mini (Non-AC)", "Mini (AC)", "Sedan (Non-AC)", "Sedan (AC)", "SUV (Non-AC)", "SUV (AC)", "Eeco (7 Seater)", "Ertiga (9 Seater)", "Bolero (7 Seater)", "Scorpio (7 Seater)", "Sumo (10 Seater)", "Tavera (10 Seater)", "Luxury (AC)", "Tempo (Non-AC)", "Tempo (AC)", "Others"] }
+      },
+      "required": ["driver_id", "model", "plate_number", "type"]
+    },
+    "Ride": {
+      "title": "Ride",
+      "description": "A trip request or completed journey",
+      "type": "object",
+      "properties": {
+        "tracking_id": { "type": "string" },
+        "pickup_location": { "type": "string" },
+        "dropoff_location": { "type": "string" },
+        "pickup_lat": { "type": "number" },
+        "pickup_lng": { "type": "number" },
+        "dropoff_lat": { "type": "number" },
+        "dropoff_lng": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "ongoing", "completed", "cancelled"] },
+        "fare": { "type": "number" },
+        "discount": { "type": "number", "description": "Discount amount applied to the ride" },
+        "vehicle_type": { "type": "string" },
+        "passengers": { "type": "integer", "description": "Number of passengers for the ride" },
+        "driver_id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "user_name": { "type": "string" },
+        "user_phone": { "type": "string" },
+        "user_email": { "type": "string", "format": "email" },
+        "driver_email": { "type": "string", "format": "email" },
+        "trip_type": { "type": "string", "enum": ["single", "round"] },
+        "distance": { "type": "number" },
+        "pickup_date": { "type": "string" },
+        "pickup_time": { "type": "string" },
+        "start_otp": { "type": "string" },
+        "end_otp": { "type": "string" },
+        "rating": { "type": "integer", "description": "User rating for the ride (1-5)" },
+        "review": { "type": "string", "description": "User review message" },
+        "cancellation_reason": { "type": "string", "description": "Reason for ride cancellation" },
+        "complaint": { "type": "string", "description": "User complaint message" },
+        "complaint_status": { "type": "string", "enum": ["pending", "resolved"], "description": "Status of the complaint" },
+        "complaint_reply": { "type": "string", "description": "Admin reply to the complaint" },
+        "complaint_forwarded_to_driver": { "type": "boolean", "description": "Whether the complaint has been forwarded to the driver" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "started_at": { "type": "string", "format": "date-time" },
+        "eta": { "type": "number" }
+      },
+      "required": ["tracking_id", "pickup_location", "dropoff_location", "status", "fare"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Wallet transaction for a driver",
+      "type": "object",
+      "properties": {
+        "driver_id": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["credit", "debit"] },
+        "description": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["driver_id", "amount", "type"]
+    },
+    "WithdrawalRequest": {
+      "title": "WithdrawalRequest",
+      "description": "Request from a driver to withdraw funds",
+      "type": "object",
+      "properties": {
+        "driver_id": { "type": "string" },
+        "amount": { "type": "number" },
+        "bank_details": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["driver_id", "amount", "status"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Admin notification for users or drivers",
+      "type": "object",
+      "properties": {
+        "message": { "type": "string" },
+        "target": { "type": "string", "enum": ["all_drivers", "all_users", "specific_driver"] },
+        "driver_id": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "read_by": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["message", "target", "created_at"]
+    },
+    "Activity": {
+      "title": "Activity",
+      "description": "Log of administrative actions",
+      "type": "object",
+      "properties": {
+        "admin_id": { "type": "string" },
+        "admin_name": { "type": "string" },
+        "admin_role": { "type": "string" },
+        "action": { "type": "string" },
+        "details": { "type": "string" },
+        "target_id": { "type": "string", "description": "ID of the entity affected" },
+        "target_type": { "type": "string", "enum": ["user", "driver", "ride", "withdrawal", "admin", "notification"], "description": "Type of the entity affected" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["action", "timestamp"]
+    }
+  },
+  "firestore": {
+    "admins": { "schema": "Admin", "description": "Platform administrators" },
+    "users": { "schema": "User", "description": "Passenger profiles" },
+    "drivers": { "schema": "Driver", "description": "Driver profiles" },
+    "vehicles": { "schema": "Vehicle", "description": "Vehicle details" },
+    "rides": { "schema": "Ride", "description": "Ride bookings" },
+    "transactions": { "schema": "Transaction", "description": "Wallet transactions" },
+    "withdrawal_requests": { "schema": "WithdrawalRequest", "description": "Withdrawal requests" },
+    "notifications": { "schema": "Notification", "description": "Admin notifications" },
+    "push_subscriptions": { "schema": "object", "description": "Web push subscriptions" },
+    "activities": { "schema": "Activity", "description": "Admin activity logs" }
+  }
+}
